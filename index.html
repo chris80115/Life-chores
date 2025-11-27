@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .container { max-width: 600px; padding-bottom: 90px; } 
+
+        /* --- Dashboard 區塊 --- */
+        .dashboard-container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 20px 15px;
+            margin-bottom: 30px;
+        }
+        
+        .dash-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;
+        }
+        
+        /* Dashboard 列表項目 */
+        .dash-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 5px;
+            border-bottom: 1px dashed #eee;
+        }
+        .dash-item:last-child { border-bottom: none; }
+        
+        /* Dashboard 左側：日期方塊 (改紅色) */
+        .date-box {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            background-color: #fff5f5; /* 淺紅底 */
+            color: #dc3545;             /* 紅字 */
+            border: 1px solid #ffe0e0;
+            font-weight: bold;
+            margin-right: 12px; flex-shrink: 0;
+        }
+        .date-box .month { font-size: 0.7rem; line-height: 1; margin-bottom: 2px; }
+        .date-box .day { font-size: 1.2rem; line-height: 1; }
+        
+        /* Dashboard 中間：名稱與週幾 */
+        .task-info { flex-grow: 1; }
+        .task-name { font-weight: 600; font-size: 1rem; color: #212529; }
+        .task-week { font-size: 0.85rem; color: #888; }
+        
+        /* Dashboard 右側：倒數天數 (放大紅字) */
+        .days-left-box {
+            text-align: right;
+            min-width: 60px;
+        }
+        .days-num {
+            font-size: 1.5rem; /* 放大顯示 */
+            font-weight: 800;
+            color: #dc3545;    /* 紅色 */
+            line-height: 1;
+        }
+        .days-label { font-size: 0.75rem; color: #dc3545; opacity: 0.8; }
+
+        /* --- Checklist 卡片樣式 --- */
+        .chore-card { 
+            border: none; border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            background: white; margin-bottom: 15px;
+            padding: 15px;
+        }
+        .status-overdue { border-left: 5px solid #dc3545; }
+        .status-safe { border-left: 5px solid #198754; }
+
+        /* Checklist 內的日期樣式 */
+        .target-date { font-size: 1.3rem; font-weight: 700; color: #333; }
+        .last-date-label { font-size: 0.9rem; color: #666; margin-right: 5px;}
+        .last-date-val { font-size: 1rem; font-weight: 500; color: #000; } /* 放大上次日期 */
+
+        /* FAB */
+        .fab-btn {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background-color: #0d6efd; color: white;
+            font-size: 28px; border: none;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    
+    <div id="dashboard-section" class="dashboard-container" style="display:none;">
+        <div class="dash-header">
+            <h5 class="m-0 fw-bold text-dark"><i class="bi bi-speedometer2 me-2"></i>本週概況</h5>
+        </div>
+        <div id="forecast-list">
+            </div>
+    </div>
+    <div id="no-forecast" class="text-center py-4 mb-3" style="display:none;">
+        <h6 class="text-muted">🎉 未來 7 天無待辦事項</h6>
+    </div>
+
+    <h6 class="text-secondary fw-bold ms-1 mb-3 small text-uppercase spacing-1">Checklist</h6>
+    <div id="chores-list">
+        <div class="text-center text-muted mt-5">載入中...</div>
+    </div>
+</div>
+
+<button class="fab-btn" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+
+<div class="modal fade" id="choreModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">新增雜務</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="choreId">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">項目名稱</label>
+                    <input type="text" class="form-control form-control-lg bg-light border-0" id="choreName">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">頻率 (天)</label>
+                        <input type="number" class="form-control bg-light border-0" id="choreFreq">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">上次執行</label>
+                        <input type="date" class="form-control bg-light border-0" id="choreLastDone">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-between">
+                <button type="button" class="btn btn-light text-danger" id="btnDelete" onclick="deleteChore()">刪除</button>
+                <div>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary px-4" onclick="saveChore()">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // TODO: 填入您的 Firebase Config
+    const firebaseConfig = {
+    apiKey: "AIzaSyBXMjjqMz6JVkyACvndahKeKTGHRmeVZ8Q",
+                authDomain: "mystockapp-b9c09.firebaseapp.com",
+                projectId: "mystockapp-b9c09",
+                storageBucket: "mystockapp-b9c09.firebasestorage.app",
+                messagingSenderId: "689745750650",
+                appId: "1:689745750650:web:aefb53067629476bcda9c3",
+                measurementId: "G-4YHP7NFQ73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let modalInstance = null;
+
+    function formatDateTwoDigits(dateObj) {
+        const m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+        const d = dateObj.getDate().toString().padStart(2, '0');
+        return `${m}/${d}`;
+    }
+
+    const q = query(collection(db, "chores"), orderBy("freq_days")); 
+    
+    onSnapshot(q, (snapshot) => {
+        const list = document.getElementById("chores-list");
+        const forecastList = document.getElementById("forecast-list");
+        const dashboardSection = document.getElementById("dashboard-section");
+        const noForecast = document.getElementById("no-forecast");
+        
+        list.innerHTML = "";
+        forecastList.innerHTML = "";
+        
+        let upcomingItems = [];
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const lastDone = new Date(data.last_done);
+            const nextDue = new Date(lastDone);
+            nextDue.setDate(lastDone.getDate() + parseInt(data.freq_days));
+            
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const checkDate = new Date(nextDue);
+            checkDate.setHours(0,0,0,0);
+            
+            const diffTime = checkDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const isOverdue = diffDays < 0;
+            const nextDueFormatted = formatDateTwoDigits(nextDue);
+            const weekDay = nextDue.toLocaleDateString('zh-TW', { weekday: 'short' });
+
+            // Dashboard 資料收集
+            if (isOverdue || diffDays <= 7) {
+                upcomingItems.push({
+                    name: data.name,
+                    dateObj: checkDate,
+                    dateStr: nextDueFormatted,
+                    weekDay: weekDay,
+                    isOverdue: isOverdue,
+                    days: diffDays,
+                    id: docSnap.id
+                });
+            }
+
+            // --- Checklist 渲染邏輯 ---
+            const cardClass = isOverdue ? "status-overdue" : "status-safe";
+            
+            list.innerHTML += `
+                <div class="chore-card ${cardClass}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-bold">${data.name}</h5>
+                            <i class="bi bi-pencil-fill text-muted" style="font-size:0.8rem; opacity:0.3; cursor:pointer" 
+                               onclick="window.openEdit('${docSnap.id}', '${data.name}', ${data.freq_days}, '${data.last_done}')"></i>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted mb-0" style="line-height:1">預計</div>
+                            <div class="target-date">${nextDueFormatted}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-end mt-3">
+                        <div>
+                            <span class="last-date-label">上次:</span>
+                            <span class="last-date-val">${formatDateTwoDigits(lastDone)}</span>
+                            <div class="text-muted small mt-1">頻率: ${data.freq_days} 天</div>
+                        </div>
+                        <button class="btn ${isOverdue?'btn-danger':'btn-outline-primary'} btn-sm px-4 rounded-3 fw-bold" 
+                            onclick="window.markDone('${docSnap.id}')">
+                            完成
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        // --- Dashboard 渲染邏輯 ---
+        if (upcomingItems.length > 0) {
+            upcomingItems.sort((a, b) => a.dateObj - b.dateObj);
+            
+            upcomingItems.forEach(item => {
+                const dateParts = item.dateStr.split('/');
+                
+                // 倒數天數顯示邏輯
+                let daysDisplay = "";
+                let labelDisplay = "天";
+                if (item.isOverdue) {
+                    daysDisplay = "過期";
+                    labelDisplay = "立即處理";
+                } else if (item.days === 0) {
+                    daysDisplay = "今天";
+                    labelDisplay = "就是現在";
+                } else {
+                    daysDisplay = item.days;
+                    labelDisplay = "天後";
+                }
+
+                forecastList.innerHTML += `
+                    <div class="dash-item" onclick="window.markDone('${item.id}')" style="cursor:pointer">
+                        <div class="d-flex align-items-center">
+                            <div class="date-box">
+                                <div class="month">${dateParts[0]}月</div>
+                                <div class="day">${dateParts[1]}</div>
+                            </div>
+                            <div class="task-info">
+                                <div class="task-name">${item.name}</div>
+                                <div class="task-week">${item.weekDay}</div>
+                            </div>
+                        </div>
+                        <div class="days-left-box">
+                            <div class="days-num">${daysDisplay}</div>
+                            <div class="days-label">${labelDisplay}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            dashboardSection.style.display = "block";
+            noForecast.style.display = "none";
+        } else {
+            dashboardSection.style.display = "none";
+            noForecast.style.display = "block";
+        }
+    });
+
+    // --- CRUD ---
+    window.openModal = () => {
+        document.getElementById('modalTitle').innerText = "新增";
+        document.getElementById('choreId').value = "";
+        document.getElementById('choreName').value = "";
+        document.getElementById('choreFreq').value = "";
+        document.getElementById('choreLastDone').value = new Date().toISOString().split('T')[0];
+        document.getElementById('btnDelete').style.display = 'none';
+        modalInstance = new bootstrap.Modal(document.getElementById('choreModal'));
+        modalInstance.show();
+    };
+
+    window.openEdit = (id, name, freq, last) => {
+        document.getElementById('modalTitle').innerText = "編輯";
+        document.getElementById('choreId').value = id;
+        document.getElementById('choreName').value = name;
+        document.getElementById('choreFreq').value = freq;
+        document.getElementById('choreLastDone').value = last;
+        document.getElementById('btnDelete').style.display = 'block';
+        modalInstance = new bootstrap.Modal(document.getElementById('choreModal'));
+        modalInstance.show();
+    }
+
+    window.saveChore = async () => {
+        const id = document.getElementById('choreId').value;
+        const name = document.getElementById('choreName').value;
+        const freq = parseInt(document.getElementById('choreFreq').value);
+        const last = document.getElementById('choreLastDone').value;
+        if(!name || !freq || !last) { alert("請填寫完整資訊"); return; }
+        if (id) await updateDoc(doc(db, "chores", id), { name, freq_days: freq, last_done: last });
+        else await addDoc(collection(db, "chores"), { name, freq_days: freq, last_done: last });
+        modalInstance.hide();
+    };
+
+    window.deleteChore = async () => {
+        if(confirm("確定刪除？")) {
+            await deleteDoc(doc(db, "chores", document.getElementById('choreId').value));
+            modalInstance.hide();
+        }
+    }
+
+    window.markDone = async (id) => {
+        if(confirm("確定標記為「完成」 (今天) 嗎？")) {
+            await updateDoc(doc(db, "chores", id), { last_done: new Date().toISOString().split('T')[0] });
+        }
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
