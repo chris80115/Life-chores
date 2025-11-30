@@ -12,7 +12,7 @@
             background-color: #f2f2f7; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #1c1c1e;
-            padding-bottom: 100px;
+            padding-bottom: 120px; /* 留多一點底部空間 */
         }
 
         .container { max-width: 600px; }
@@ -27,29 +27,25 @@
         }
 
         .dash-header {
-            display: flex; align-items: center; margin-bottom: 15px; 
+            display: flex; align-items: center; margin-bottom: 10px; 
             border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;
         }
         .dash-title { font-size: 1.1rem; font-weight: 700; color: #1c1c1e; }
 
-        /* Dashboard 列表項目 */
         .dash-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 0;
             border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
+            cursor: pointer; /* 讓這裡也可以點 */
         }
         .dash-item:last-child { border-bottom: none; }
 
-        /* Dashboard 日期方塊 */
         .date-badge {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 48px; height: 48px;
             border-radius: 10px;
-            background-color: #ff3b3015; /* 淺紅 */
-            color: #ff3b30;              /* 紅字 */
-            font-weight: bold;
-            margin-right: 15px;
+            background-color: #ff3b3015; color: #ff3b30;
+            font-weight: bold; margin-right: 15px;
         }
         .date-badge .m { font-size: 0.7rem; opacity: 0.8; }
         .date-badge .d { font-size: 1.2rem; line-height: 1; }
@@ -65,78 +61,76 @@
         .list-group-container {
             background-color: #ffffff;
             border-radius: 16px;
-            overflow: hidden; /* 讓圓角內的內容不溢出 */
+            overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
 
         .list-header {
             padding: 15px 20px 5px 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #8e8e93;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 0.9rem; font-weight: 600; color: #8e8e93;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
 
         .list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 16px 20px;
             background-color: white;
             position: relative;
         }
         
-        /* 分隔線：除了最後一個項目外，都有底線 */
+        /* 分隔線 */
         .list-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 20px; /* 左側留白，類似 iOS */
-            right: 0;
-            height: 1px;
-            background-color: #e5e5ea;
+            content: ''; position: absolute; bottom: 0; left: 20px; right: 0;
+            height: 1px; background-color: #e5e5ea;
         }
 
-        .item-left { flex-grow: 1; margin-right: 15px; }
+        /* 左側資訊 */
+        .item-left { 
+            flex-grow: 1; margin-right: 10px; min-width: 0; /* 防止擠壓 */
+        }
         .item-name { 
             font-size: 1.05rem; font-weight: 600; color: #1c1c1e; margin-bottom: 4px;
-            display: flex; align-items: center;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .item-meta { font-size: 0.85rem; color: #8e8e93; }
 
-        .item-right { text-align: right; display: flex; align-items: center; gap: 15px; }
+        /* 右側區塊 (日期+按鈕) */
+        .item-right { 
+            display: flex; align-items: center; gap: 12px; 
+            flex-shrink: 0; /* 確保右邊不會被壓扁 */
+        }
         
-        .date-group { display: flex; flex-direction: column; align-items: flex-end; }
-        .target-date { font-size: 1.1rem; font-weight: 700; color: #1c1c1e; }
+        .date-group { display: flex; flex-direction: column; align-items: flex-end; min-width: 60px; }
+        .target-date { font-size: 1rem; font-weight: 700; color: #1c1c1e; }
         .target-label { font-size: 0.7rem; color: #8e8e93; }
-        
-        .status-overdue .target-date { color: #ff3b30; } /* 過期紅字 */
+        .status-overdue .target-date { color: #ff3b30; }
         .status-overdue .target-label { color: #ff3b30; }
 
-        /* 圓形打勾按鈕 */
-        .btn-check {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            border: 2px solid #007aff;
-            background: transparent;
-            color: #007aff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
+        /* --- 新增：實體按鈕樣式 --- */
+        .btn-complete {
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
             transition: all 0.2s;
-            padding: 0; /* 重置 */
+            white-space: nowrap;
         }
-        .btn-check:hover, .btn-check:active {
-            background-color: #007aff;
+        /* 正常按鈕：灰底藍字 */
+        .btn-normal {
+            background-color: #f2f2f7;
+            color: #007aff;
+        }
+        .btn-normal:active { background-color: #e5e5ea; transform: scale(0.95); }
+        
+        /* 過期按鈕：紅底白字 */
+        .btn-urgent {
+            background-color: #ff3b30;
             color: white;
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3);
         }
-        .btn-check.btn-urgent {
-            border-color: #ff3b30; color: #ff3b30;
-        }
-        .btn-check.btn-urgent:hover {
-            background-color: #ff3b30; color: white;
-        }
+        .btn-urgent:active { transform: scale(0.95); box-shadow: none; }
+
 
         /* FAB */
         .fab-btn {
@@ -271,11 +265,12 @@
                 });
             }
 
-            // --- Checklist 渲染 (選單風格) ---
+            // --- Checklist 渲染 ---
             const statusClass = isOverdue ? "status-overdue" : "";
-            const btnUrgentClass = isOverdue ? "btn-urgent" : "";
+            // 按鈕樣式判斷
+            const btnClass = isOverdue ? "btn-urgent" : "btn-normal";
+            const btnText = isOverdue ? "立即完成" : "完成";
             
-            // 編輯按鈕隱藏在標題旁的小圖示
             list.innerHTML += `
                 <div class="list-item ${statusClass}">
                     <div class="item-left">
@@ -294,8 +289,8 @@
                             <div class="target-date">${nextDueFormatted}</div>
                             <div class="target-label">預計日期</div>
                         </div>
-                        <button class="btn-check ${btnUrgentClass}" onclick="window.markDone('${docSnap.id}')">
-                            <i class="bi bi-check"></i>
+                        <button class="btn-complete ${btnClass}" onclick="window.markDone('${docSnap.id}')">
+                            ${btnText}
                         </button>
                     </div>
                 </div>
